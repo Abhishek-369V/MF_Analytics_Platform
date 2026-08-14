@@ -1,92 +1,69 @@
+"""
+Data Ingestion Script — Bluestock MF Analytics Platform
+Day 1: Loads all raw CSV datasets, inspects shape/dtypes/nulls/duplicates,
+and explores fund master metadata (unique fund houses, categories, risk grades).
+"""
+
 import pandas as pd
-import os
+from pathlib import Path
 
-# ============================================================
-# DATA INGESTION SCRIPT — Bluestock MF Analytics Platform
-# Day 1: Load all 10 CSV datasets and inspect them - (Task 3)
-# ============================================================
+BASE_DIR = Path(__file__).resolve().parent
+RAW_DATA_PATH = BASE_DIR / "data" / "raw"
 
 
-# Raw_data_path folder:
-RAW_DATA_PATH = "data/raw/"
+def load_and_inspect_all_csvs(raw_path: Path) -> dict:
+    """Load every CSV in raw_path, print shape/dtype/null/duplicate summary, return as dict of DataFrames."""
+    csv_files = [f for f in raw_path.iterdir() if f.suffix == ".csv"]
+    print(f"\nTotal CSV files found: {len(csv_files)}")
+    print("=" * 60)
 
-# List all CSV files in the raw folder
-csv_files = [f for f in os.listdir(RAW_DATA_PATH) if f.endswith(".csv")]
+    dataframes = {}
+    for file_path in csv_files:
+        df = pd.read_csv(file_path)
+        dataset_name = file_path.stem
+        dataframes[dataset_name] = df
 
-print(f"\nTotal csv file found: {len(csv_files)}")
-print("=" *60)
+        print(f"\nDataset: {file_path.name}")
+        print(f"Shape: {df.shape[0]} rows, {df.shape[1]} columns")
+        print(f"Columns: {list(df.columns)}")
 
-# Empty list to store all dataframes
-dataframes = {}
+        null_counts = df.isnull().sum()
+        if null_counts.any():
+            print(f"Null values found:\n{null_counts[null_counts > 0]}")
+        else:
+            print("No null values found.")
 
-for file in csv_files:
-    file_path = os.path.join(RAW_DATA_PATH, file) 
-    df = pd.read_csv(file_path)
+        duplicates = df.duplicated().sum()
+        print(f"Duplicated rows: {duplicates}" if duplicates else "No duplicated rows.")
+        print("=" * 60)
 
-    # Storing dataframes
-    dataset_name = file.replace('csv', '')
-
-
-    # checking with data:
-    print(f"\nDataset: {file}")
-    print(f"Shape: {df.shape}, {df.shape[0]} rows and {df.shape[1]} columns")
-    print(f"Columns: {list(df.columns)}")
-    print(f"dftype: {df.dtypes}")
-    print(f"First 3 rows: {df.head(3)}")
-
-
-    # Note Anomolies
-    null_counts = df.isnull().sum()
-    if null_counts.any():
-        print(f"\n Null values found: {null_counts}")
-    else: 
-        print(f"\n No Null Values found!....")
+    print("\nData ingestion complete: all datasets loaded successfully.\n")
+    return dataframes
 
 
-    # Check for duplicates:
-    duplicates = df.duplicated().sum()
-    if duplicates.any():
-        print(f"\n Duplicated rows = {duplicates}")
-    else:
-        print(f"\n No duplicated rows!....")
+def explore_fund_master(dataframes: dict) -> None:
+    """Print unique fund houses, categories, sub-categories, and risk grades from fund master."""
+    df_fund = dataframes.get("01_fund_master")
+    if df_fund is None:
+        print("Fund master file not found — skipping exploration.")
+        return
 
-    print("=" *60)
+    print("\n------ Fund Master Exploration ------")
+    print("=" * 60)
 
-print(f"\n ---------- Data Ingestion Completed: All data loaded successfully! ----------\n" )
+    for col, label in [
+        ("fund_house", "fund houses"),
+        ("category", "categories"),
+        ("sub_category", "sub-categories"),
+        ("risk_category", "risk grades"),
+    ]:
+        if col in df_fund.columns:
+            print(f"\nUnique {label}: {df_fund[col].nunique()}")
+            print(df_fund[col].unique())
+
+    print("\nFund master exploration complete.\n")
 
 
-# ============================================================
-# FUND MASTER EXPLORATION (Task 6)
-# ============================================================
-
-# Load fund master specifically
-# fund master has no null, duplicates - no need for cleaning
-fund_master_file = "01_fund_master.csv"
-
-if fund_master_file in [f for f in csv_files]:
-    df_fund = pd.read_csv(os.path.join(RAW_DATA_PATH, fund_master_file))
-
-    print(f"\n ------ Fund Master Exploration: ----------")
-    print("=" *60)
-
-    # finding unique fund_houses
-    if 'fund_house' in df_fund.columns:
-        print(f"\nUnique fund houses are : {df_fund['fund_house'].nunique()}")
-        print(df_fund['fund_house'].unique())
-
-    #  finding unique categories
-    if 'category' in df_fund.columns:
-        print(f"\nUnique categories are : {df_fund['category'].nunique()}")
-        print(df_fund['category'].unique())
-
-    #  finding unique sub-categories
-    if 'sub_category' in df_fund.columns:
-        print(f"\nUnique sub_categories are : {df_fund['sub_category'].nunique()}")
-        print(df_fund['sub_category'].unique())
-
-    #  finding unique risk grades
-    if 'risk_category' in df_fund.columns:
-        print(f"\nUnique risk grades are : {df_fund['risk_category'].nunique()}")
-        print(df_fund['risk_category'].unique())
-
-    print(f"\n ---------- Fund master exploration complete! ----------\n" )
+if __name__ == "__main__":
+    dataframes = load_and_inspect_all_csvs(RAW_DATA_PATH)
+    explore_fund_master(dataframes)
