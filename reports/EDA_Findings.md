@@ -29,9 +29,12 @@
    (Jan 2022) to 26.12 Cr (Dec 2025) — Equity folios grew fastest, 
    driven by SIP-first investing behavior among millennials. *(Chart 7)*
 
-8. **High Intra-Sector Correlation:** Large Cap funds from different 
-   AMCs show correlation of 0.85-0.95 with each other, suggesting 
-   limited diversification benefit within the same category. *(Chart 8)*
+8. **High Intra-Sector Correlation:** The computed daily return 
+   correlations among the sampled funds are consistently low — within 
+   ±0.06 of zero. This suggests the sampled funds behave largely independently 
+   of one another in this dataset, and any diversification strategy based 
+   on fund selection alone should be validated against actual computed 
+   correlations rather than assumed from category labels.. *(Chart 8)*
 
 9. **Sector Concentration Risk:** Banking & Financial Services sector 
    dominates equity fund holdings at 28-35% weight, creating 
